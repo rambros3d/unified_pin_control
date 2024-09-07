@@ -1,15 +1,16 @@
-# # Unified Pin Control
+# Unified Pin Control
 
 ## Overview
 
-The **Unified Pin Control** code provides an Arduino library for managing GPIO pins with flexible commands. This library allows you to control pins for various modes such as digital output, analog output, digital input, and analog input. It includes commands to set pin modes, values, and retrieve status information.
+The **Unified Pin Control** code provides an easy way for controlling GPIO pins with flexible commands. This code allows you to control pins for various modes such as digital output, analog output (pwm), digital input, and analog input. It includes commands to set pin modes, values, and retrieve status information.
 
 ## Features
 
-- Control digital and analog pins with simple commands
-- Dynamically update pin values and modes
-- Non-blocking periodic updates for input and analog modes
-- Detailed command handling with helpful feedback
+- Interactive serial command interface with help instructions
+- Write digital and PWM values
+- Read digital and analog values
+- Deactivate pins when no longer required
+- Periodic updates of pin states when a pin is in INPUT mode
 
 ## Commands
 
@@ -45,9 +46,9 @@ The **Unified Pin Control** code provides an Arduino library for managing GPIO p
   
   **Example:**
   
-  `GPIOA1 ANALOG`
+  `GPIO1 ANALOG`
   
-  This sets pin A1 to analog input mode and displays its current analog value.
+  This sets pin 1 to analog input mode and displays its current analog value.
 
 ### 3. `GPIO(pin number) HIGH` or `GPIO(pin number) LOW`
 
@@ -87,27 +88,19 @@ The **Unified Pin Control** code provides an Arduino library for managing GPIO p
 
 ### 5. `GPIO(pin number) REMOVE`
 
-- **Function**: Deactivates the specified pin.
-- **Mode**: NONE
-- **Type**: N/A
-- **Output**: No output on the serial monitor.
+- **Function**: Deactivates the pin and removes it from control list.
 
 ### 6. `REMOVE ALL`
 
-- **Function**: Sets all active pins to NONE mode.
-- **Mode**: NONE
-- **Type**: N/A
-- **Output**: No output on the serial monitor.
+- **Function**: Deactivates all active pins and removes them from control list.
 
 ## Installation
 
 1. Clone the repository:
    
-   bash
+   `git clone [GitHub - rambrosteam/unified_pin_control](https://github.com/rambrosteam/unified_pin_control).git`
    
-   Copy code
-   
-   `git clone https://github.com/yourusername/unified-pin-control.git`
+   or download and unzip from github directly
 
 2. Upload the code to your Arduino board.
 
@@ -126,4 +119,6 @@ The **Unified Pin Control** code provides an Arduino library for managing GPIO p
 
 Feel free to fork this repository, submit issues, and create pull requests. Your contributions are welcome!
 
+#### Other info:
 
+Code was partially generated and fully commented using GPT
