@@ -21,19 +21,19 @@ The **Unified Pin Control** system is an Arduino sketch designed to simplify GPI
 
 **Usage**:
 
-```
+```c++
 GPIO(pin number) INPUT
 ```
 
 **Example**:
 
-```
+```c++
 GPIO4 INPUT
 ```
 
 **Expected Output**:
 
-```
+```c++
 PIN     MODE    TYPE    VALUE
 GPIO4  INPUT   DIGITAL LOW
 ```
@@ -44,19 +44,19 @@ GPIO4  INPUT   DIGITAL LOW
 
 **Usage**:
 
-```
+```c++
 GPIO(pin number) INPUT_PULLDOWN
 ```
 
 **Example**:
 
-```
+```c++
 GPIO2 INPUT_PULLDOWN
 ```
 
 **Expected Output**:
 
-```
+```c++
 PIN     MODE    TYPE    VALUE
 GPIO2  INPUT   LOGIC   LOW
 ```
@@ -67,19 +67,19 @@ GPIO2  INPUT   LOGIC   LOW
 
 **Usage**:
 
-```
+```c++
 GPIO(pin number) ANALOG
 ```
 
 **Example**:
 
-```
+```c++
 GPIO12 ANALOG
 ```
 
 **Expected Output**:
 
-```
+```c++
 PIN     MODE    TYPE    VALUE
 GPIO12  INPUT   ANALOG  512
 ```
@@ -90,19 +90,19 @@ GPIO12  INPUT   ANALOG  512
 
 **Usage**:
 
-```
+```c++
 GPIO(pin number) HIGH
 ```
 
 **Example**:
 
-```
+```c++
 GPIO14 HIGH
 ```
 
 **Expected Output**:
 
-```
+```c++
 PIN     MODE    TYPE    VALUE
 GPIO14  OUTPUT  DIGITAL HIGH
 ```
@@ -113,19 +113,19 @@ GPIO14  OUTPUT  DIGITAL HIGH
 
 **Usage**:
 
-```
+```c++
 GPIO(pin number) LOW
 ```
 
 **Example**:
 
-```
+```c++
 GPIO15 LOW
 ```
 
 **Expected Output**:
 
-```
+```c++
 PIN     MODE    TYPE    VALUE
 GPIO15  OUTPUT  DIGITAL LOW
 ```
@@ -136,19 +136,19 @@ GPIO15  OUTPUT  DIGITAL LOW
 
 **Usage**:
 
-```
+```c++
 GPIO(pin number) (integer)
 ```
 
 **Example**:
 
-```
+```c++
 GPIO12 128
 ```
 
 **Expected Output**:
 
-```
+```c++
 PIN     MODE    TYPE    VALUE
 GPIO12  OUTPUT  PWM     128
 ```
@@ -159,8 +159,14 @@ GPIO12  OUTPUT  PWM     128
 
 **Usage**:
 
-```
+```c++
 GPIO(pin number) REMOVE
+```
+
+### **Example**:
+
+```c++
+GPIO22 REMOVE
 ```
 
 ### REMOVE ALL
@@ -169,11 +175,9 @@ GPIO(pin number) REMOVE
 
 **Usage**:
 
-```
+```C++
 REMOVE ALL
 ```
-
-
 
 ### HELP - print available commands
 
@@ -181,7 +185,7 @@ REMOVE ALL
 
 **Usage**:
 
-```
+```C++
 h
 H
 HELP
@@ -189,13 +193,13 @@ HELP
 
 **Example**:
 
-```
+```C++
 HELP
 ```
 
 **Expected Output**:
 
-```
+```C++
 Unified Pin Control
 Available commands:
 1. GPIO(pin) INPUT for digitalRead
@@ -217,16 +221,18 @@ The system displays the status of each pin, including:
 - **TYPE**: The type of value read or written (e.g., DIGITAL, ANALOG, PWM).
 - **VALUE**: The current value of the pin.
 
+---
+
 ## Installation
 
 1. Upload the sketch to your Arduino board using the Arduino IDE.
 2. Open the Serial Monitor at a baud rate of 115200.
 3. Enter commands as described above to configure and manage the GPIO pins.
 
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-Feel free to tweak or add more details as needed.
