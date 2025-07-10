@@ -1,48 +1,133 @@
-# Unified Pin Control API
+# 🛠️ Unified Pin Control API
 
-## 📌 Overview
+## Overview
 
 - **Transport:** WebSerial (USB Serial)
-- **Encoding:** UTF-8 JSON, newline (`\n`) terminated
-- **Baud Rate:** (115200 recommended)
+- **Datatype:** JSON with ArduinoJson, newline (`\n`) terminated
 
+---
 
-| Command     | Description                         | Example                                              |
-| ----------- | ----------------------------------- | ---------------------------------------------------- |
-| `GET_INFO`  | Get board name and pin capabilities | `{ "cmd": "GET_INFO" }`                              |
-| `PIN_READ`  | Read digital/analog value of a pin  | `{ "cmd": "PIN_READ", "pin": 5, "mode": "digital" }` |
-| `PIN_WRITE` | Write digital value to a pin        | `{ "cmd": "PIN_WRITE", "pin": 5, "value": 1 }`       |
-| `PWM_WRITE` | Write PWM value (0-255) to a pin    | `{ "cmd": "PWM_WRITE", "pin": 5, "value": 128 }`     |
-| `RESET`     | Reset pin states                    | `{ "cmd": "RESET" }`                                 |
+## Glossary
 
-## GET_INFO
+| Short    | Description               |
+| -------- | ------------------------- |
+| `IN`     | Digital INPUT             |
+| `IN_UP`  | Digital INPUT_PULLUP      |
+| `IN_DN`  | Digital INPUT_PULLDOWN    |
+| `ADC`    | ANALOG_INPUT              |
+| `TOUCH`  | Capacitive Touch Input    |
+| `OUT`    | Digital OUTPUT*           |
+| `OUT_OD` | Digital OUTPUT_OPEN_DRAIN |
+| `PWM`    | ANALOG_WRITE (PWM)        |
+| `DAC`    | True Analog Output        |
 
-### Command
+---
 
-```
+## Commands
+
+### 1️⃣ `GET_INFO`
+
+Fetches the board name, PlatformIO board ID, and the capabilities of each pin.
+
+#### Command
+```json
 { "cmd": "GET_INFO" }
 ```
 
-### Response
-
-```
+#### Response
+```json
 {
-  "name": "ESP32-S3 dev board",
-  "board": esp32s3
+  "board": "ESP32-S3 dev board",
+  "id": "esp32s3",
   "pins": [
     {
-      "pin": GPIO0,
-      "in": ["IN", "IN_UP", "IN_DOWN"],
-      "out": ["OUT", "PWM", "ANA"]
-    },
-    .
-    .
-    .
-    .
+      "pin": "GPIO0",
+      "in": ["IN", "IN_UP", "IN_DN", "ADC"],
+      "out": ["OUT", "PWM", "DAC"]
+    }
   ]
 }
-
 ```
 
+---
 
+### 2️⃣ `PIN_SET`
 
+Sets the mode and value of a specific pin. Optional `res` (resolution) and `freq` (frequency) for PWM/DAC. If `"ack": 1` is provided, the board responds with confirmation.
+
+#### Command
+```json
+{
+  "cmd": "PIN_SET",
+  "pin": "GPIO0",
+  "mode": "OUT",
+  "value": 1,
+  "res": 8,
+  "freq": 1000,
+  "ack": 1
+}
+```
+
+#### Response (if `"ack": 1`)
+```json
+{
+  "pin": "GPIO0",
+  "mode": "OUT",
+  "value": 1
+}
+```
+
+---
+
+### 3️⃣ `UPDATE`
+
+Fetches the current state, mode, and value (with optional `res`/`freq`) of **all pins** for efficient monitoring.
+
+#### Command
+```json
+{ "cmd": "UPDATE" }
+```
+
+#### Response
+```json
+{
+  "pins": [
+    {
+      "pin": "GPIO0",
+      "mode": "IN",
+      "value": 1
+    },
+    {
+      "pin": "GPIO1",
+      "mode": "PWM",
+      "value": 128,
+      "res": 8,
+      "freq": 1000
+    },
+    {
+      "pin": "A0",
+      "mode": "ADC",
+      "res": 10,
+      "value": 523
+    }
+  ]
+}
+```
+
+---
+
+### 4️⃣ `RESET`
+
+Resets all pins to their default safe state.
+
+#### Command
+```json
+{ "cmd": "RESET" }
+```
+
+#### Response
+```json
+{ "reset": "ok" }
+```
+
+---
