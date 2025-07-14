@@ -162,7 +162,7 @@ Resets all pins to their default safe state.
 { "reset": "ok" }
 ```
 
-### SAVE_CONFIG
+### 6 `SAVE_CONFIG`
 Save the current configuration for persistance between resets
 
 #### Command
