@@ -65,7 +65,7 @@ Returns the currently configured pins and their types (mode).
 #### Response
 ```json
 {
-  "configured": [
+  "config": [
     {
       "pin": "GPIO0",
       "mode": "OUT"
@@ -159,7 +159,7 @@ Resets all pins to their default safe state.
 
 #### Response
 ```json
-{ "reset": "ok" }
+{ "resp": "reset" }
 ```
 
 ### 6 `SAVE_CONFIG`
@@ -172,7 +172,7 @@ Save the current configuration for persistance between resets
 
 #### Response
 ```json
-{ "saved": "ok" }
+{ "resp": "saved" }
 ```
 
 ---
