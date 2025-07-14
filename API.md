@@ -25,7 +25,7 @@
 
 ## Commands
 
-### 1️⃣ `GET_INFO`
+### 1 `GET_DEF`
 
 Fetches the board name, PlatformIO board ID, and the capabilities of each pin.
 
@@ -51,7 +51,30 @@ Fetches the board name, PlatformIO board ID, and the capabilities of each pin.
 
 ---
 
-### 2️⃣ `PIN_SET`
+---
+
+### 2 `GET_CONFIG`
+
+Returns the currently configured pins and their types (mode).
+
+#### Command
+```json
+{ "cmd": "GET_INFO" }
+```
+
+#### Response
+```json
+{
+  "configured": [
+    { "pin": "GPIO0", "mode": "OUT" },
+    { "pin": "GPIO1", "mode": "PWM" },
+    { "pin": "A0",    "mode": "ADC" }
+  ]
+}
+```
+---
+
+### 3 `PIN_SET`
 
 Sets the mode and value of a specific pin. Optional `res` (resolution) and `freq` (frequency) for PWM/DAC. If `"ack": 1` is provided, the board responds with confirmation.
 
@@ -79,7 +102,7 @@ Sets the mode and value of a specific pin. Optional `res` (resolution) and `freq
 
 ---
 
-### 3️⃣ `UPDATE`
+### 4 `UPDATE`
 
 Fetches the current state, mode, and value (with optional `res`/`freq`) of **all pins** for efficient monitoring.
 
@@ -116,7 +139,7 @@ Fetches the current state, mode, and value (with optional `res`/`freq`) of **all
 
 ---
 
-### 4️⃣ `RESET`
+### 5 `RESET`
 
 Resets all pins to their default safe state.
 
