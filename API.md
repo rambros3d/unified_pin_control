@@ -66,9 +66,18 @@ Returns the currently configured pins and their types (mode).
 ```json
 {
   "configured": [
-    { "pin": "GPIO0", "mode": "OUT" },
-    { "pin": "GPIO1", "mode": "PWM" },
-    { "pin": "A0",    "mode": "ADC" }
+    {
+      "pin": "GPIO0",
+      "mode": "OUT"
+      },
+    {
+      "pin": "GPIO1",
+      "mode": "PWM"
+      },
+    {
+      "pin": "A0",
+      "mode": "ADC"
+      }
   ]
 }
 ```
@@ -151,6 +160,19 @@ Resets all pins to their default safe state.
 #### Response
 ```json
 { "reset": "ok" }
+```
+
+### SAVE_CONFIG
+Save the current configuration for persistance between resets
+
+#### Command
+```json
+{ "cmd": "SAVE_CONFIG" }
+```
+
+#### Response
+```json
+{ "saved": "ok" }
 ```
 
 ---
