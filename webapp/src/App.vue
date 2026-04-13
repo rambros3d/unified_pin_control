@@ -1,29 +1,23 @@
 <template>
   <div class="h-screen bg-surface-900 text-twhite flex flex-col overflow-hidden">
     <Toast />
-
-    <!-- Connection Bar -->
     <ConnectionBar />
 
-    <!-- Tab Bar — centered -->
+    <!-- Tab Bar -->
     <nav class="flex-shrink-0 bg-surface-800 border-b border-surface-700 flex items-center justify-center px-4 gap-1">
       <button
-        v-for="tab in tabs"
-        :key="tab.id"
+        v-for="tab in tabs" :key="tab.id"
         @click="activeTab = tab.id"
         class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
         :class="activeTab === tab.id
           ? 'border-blue-500 text-twhite'
           : 'border-transparent text-tgray-400 hover:text-twhite hover:border-surface-500'"
       >
-        <span>{{ tab.icon }}</span>
-        <span>{{ tab.label }}</span>
+        <span>{{ tab.icon }}</span><span>{{ tab.label }}</span>
       </button>
     </nav>
 
-    <!-- Main content -->
     <main class="flex-1 min-h-0 flex flex-col overflow-hidden">
-
       <!-- Disconnected splash -->
       <div v-if="!isConnected" class="flex flex-col items-center justify-center flex-1 gap-6">
         <div class="text-6xl">🔌</div>
@@ -32,17 +26,13 @@
         <p v-if="lastError" class="text-red-400 text-sm">{{ lastError }}</p>
       </div>
 
-      <!-- Connected views -->
       <template v-else>
-
         <!-- Pin Control -->
         <div v-show="activeTab === 'pins'" class="flex-1 min-h-0 overflow-y-auto p-4">
-          <!-- Toolbar -->
           <div class="flex flex-wrap items-center gap-3 mb-4">
             <button @click="onUpdate" class="btn-secondary" :disabled="polling">⟳ Update</button>
             <label class="flex items-center gap-2 text-sm text-tgray-300 cursor-pointer">
-              <input type="checkbox" v-model="polling" class="accent-blue-500" />
-              Auto-poll
+              <input type="checkbox" v-model="polling" class="accent-blue-500" /> Auto-poll
             </label>
             <select v-model="pollInterval" class="bg-surface-700 text-sm text-tgray-300 rounded px-2 py-1 border border-surface-600">
               <option :value="250">250 ms</option>
@@ -51,14 +41,11 @@
               <option :value="2000">2 s</option>
             </select>
             <div class="flex-1" />
-            <!-- Add Pin button -->
             <button
               @click="showAddPin = true"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold
                      bg-blue-600 hover:bg-blue-500 text-white transition-colors border border-blue-500"
-            >
-              <span class="text-base leading-none">+</span> Add Pin
-            </button>
+            ><span class="text-base leading-none">+</span> Add Pin</button>
             <button @click="onSaveConfig" class="btn-secondary">💾 Save Config</button>
             <button @click="confirmReset = true" class="btn-danger">⚠ Reset All</button>
           </div>
@@ -79,16 +66,10 @@
         <div v-show="activeTab === 'flasher'" class="flex-1 min-h-0 overflow-y-auto">
           <FlasherTab />
         </div>
-
       </template>
     </main>
 
-    <!-- Add Pin Modal -->
-    <AddPinModal
-      v-if="showAddPin"
-      @close="showAddPin = false"
-      @applied="onPinApplied"
-    />
+    <AddPinModal v-if="showAddPin" @close="showAddPin = false" @applied="onPinApplied" />
 
     <!-- Reset modal -->
     <div v-if="confirmReset" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -127,33 +108,53 @@ const tabs = [
   { id: 'terminal', icon: '🖥️', label: 'Serial Terminal' },
   { id: 'flasher',  icon: '⚡', label: 'Firmware Flasher' },
 ]
-const activeTab   = ref('pins')
-const showAddPin  = ref(false)
-
-const polling     = ref(false)
+const activeTab  = ref('pins')
+const showAddPin = ref(false)
+const polling    = ref(false)
 const pollInterval = ref(500)
 let pollTimer = null
+
 watch([polling, pollInterval], () => {
   clearInterval(pollTimer)
   if (polling.value) pollTimer = setInterval(() => pinStore.requestUpdate(), pollInterval.value)
 })
 onUnmounted(() => clearInterval(pollTimer))
 
-const removeHandler = onMessage(async (msg) => {
-  if (msg.error) { toast.add({ severity: 'error', summary: 'Board Error', detail: msg.error, life: 4000 }); return }
-  if (msg.board)       { pinStore.loadDef(msg); await pinStore.getConfig() }
-  else if (msg.config)  pinStore.loadConfig(msg)
-  else if (msg.pins)    pinStore.applyUpdate(msg)
-  else if (msg.pin)     pinStore.applyAck(msg)
-  else if (msg.resp)    toast.add({ severity: 'success', summary: msg.resp, life: 2000 })
+// ─── Message dispatcher — matches the TEXT protocol from useSerial.js
+// msg = { type: 'BINFO'|'CONFIG'|'STAT'|'ACK'|'RESET'|'SAVE'|'ERR', payload, raw }
+const removeHandler = onMessage(async ({ type, payload }) => {
+  switch (type) {
+    case 'BINFO':
+      pinStore.loadDef(payload)      // payload: { id, name, pins: [{pin, caps}] }
+      await pinStore.getConfig()
+      break
+    case 'CONFIG':
+      pinStore.loadConfig(payload)   // payload: { config: [{pin, mode}] }
+      break
+    case 'STAT':
+      pinStore.applyUpdate(payload)  // payload: { updates: [{pin, value}] }
+      break
+    case 'ACK':
+      pinStore.applyAck(payload)     // payload: { pin, mode, value }
+      break
+    case 'RESET':
+      toast.add({ severity: 'info', summary: 'Board reset', life: 2000 })
+      break
+    case 'SAVE':
+      toast.add({ severity: 'success', summary: 'Config saved', life: 2000 })
+      break
+    case 'ERR':
+      toast.add({ severity: 'error', summary: 'Board Error', detail: payload.message, life: 4000 })
+      break
+  }
 })
 onUnmounted(() => removeHandler())
 
-async function onUpdate() { await pinStore.requestUpdate() }
+async function onUpdate()     { await pinStore.requestUpdate() }
 async function onSaveConfig() { await pinStore.saveConfig() }
 
 function onPinApplied({ pin, mode }) {
-  toast.add({ severity: 'success', summary: `${pin} set to ${mode}`, life: 2000 })
+  toast.add({ severity: 'success', summary: `${pin} → ${mode}`, life: 2000 })
 }
 
 const confirmReset = ref(false)
