@@ -58,6 +58,8 @@ export function useSerial() {
   async function send(cmdObject) {
     if (!writer) throw new Error('Not connected')
     const line = JSON.stringify(cmdObject) + '\n'
+    // Emit for MonitorDrawer to capture outgoing commands
+    window.dispatchEvent(new CustomEvent('upc:tx', { detail: line.trim() }))
     await writer.write(line)
   }
 
