@@ -7,9 +7,9 @@
     />
 
     <!-- Board name -->
-    <div v-if="isConnected && boardName" class="flex items-center gap-2">
-      <span class="font-semibold text-sm">{{ boardName }}</span>
-      <span class="text-xs bg-surface-700 text-gray-400 px-2 py-0.5 rounded font-mono">{{ boardId }}</span>
+    <div v-if="isConnected && pinStore.boardName" class="flex items-center gap-2">
+      <span class="font-semibold text-sm">{{ pinStore.boardName }}</span>
+      <span class="text-xs bg-surface-700 text-gray-400 px-2 py-0.5 rounded font-mono">{{ pinStore.boardId }}</span>
     </div>
     <span v-else class="text-gray-400 text-sm">
       {{ isConnected ? 'Fetching board info...' : 'No device connected' }}
@@ -31,16 +31,9 @@
       </select>
     </div>
 
-    <!-- Monitor toggle -->
-    <button
-      v-if="isConnected"
-      @click="monitorOpen = !monitorOpen"
-      class="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-surface-700"
-    >📋 Monitor</button>
-
     <!-- Connect / Disconnect -->
     <button
-      @click="isConnected ? disconnect() : connect(baudRate)"
+      @click="isConnected ? handleDisconnect() : handleConnect()"
       class="text-sm px-4 py-1.5 rounded-lg font-medium transition-colors"
       :class="isConnected
         ? 'bg-red-700 hover:bg-red-600 text-white'
@@ -55,27 +48,20 @@
 import { ref } from 'vue'
 import { useSerial } from '@/composables/useSerial'
 import { usePinStore } from '@/stores/pinStore'
-import { useMonitorStore } from '@/stores/monitorStore'
 
 const { isConnected, connect, disconnect } = useSerial()
 const pinStore = usePinStore()
-const monitorStore = useMonitorStore()
-const { boardName, boardId } = pinStore
-const { open: monitorOpen } = monitorStore
 
 const baudRate = ref(115200)
 
-async function connectDevice() {
+async function handleConnect() {
   await connect(baudRate.value)
   if (isConnected.value) {
     await pinStore.getDef()
   }
 }
 
-// Override connect to also fetch board def
-const { connect: _connect } = useSerial()
-async function connect(baud) {
-  await _connect(baud)
-  if (isConnected.value) await pinStore.getDef()
+async function handleDisconnect() {
+  await disconnect()
 }
 </script>
