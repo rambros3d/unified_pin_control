@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [vue()],
   base: '/unified_pin_control/',
   build: {
-    outDir: '../dist',
+    outDir: 'dist',
   },
   resolve: {
     alias: {
