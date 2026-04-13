@@ -1,11 +1,11 @@
 <template>
-  <!-- Outer wrapper fills the tab panel and sets up the sticky layout -->
+  <!-- Outer wrapper: relative so the absolute input bar is anchored to it -->
   <div class="relative flex flex-col h-full overflow-hidden">
 
-    <!-- Scrollable log — leaves room for the sticky bar at bottom -->
+    <!-- Scrollable log — pb-14 so last lines are never hidden under the input bar -->
     <div
       ref="logEl"
-      class="flex-1 overflow-y-auto font-mono text-xs px-4 py-3 bg-surface-900 flex flex-col gap-0.5"
+      class="flex-1 overflow-y-auto font-mono text-xs px-4 pt-3 pb-14 bg-surface-900 flex flex-col gap-0.5"
     >
       <div v-if="!entries.length" class="text-tgray-400 italic">
         No messages yet. Connect a device and start receiving data.
@@ -27,8 +27,8 @@
       </div>
     </div>
 
-    <!-- Sticky input bar — always anchored to the bottom -->
-    <div class="sticky bottom-0 flex items-center gap-2 px-3 py-2 bg-surface-800 border-t border-surface-700 z-10">
+    <!-- Input bar — absolutely pinned to the bottom of the panel -->
+    <div class="absolute bottom-0 inset-x-0 flex items-center gap-2 px-3 py-2 bg-surface-800 border-t border-surface-700 z-10">
       <input
         ref="inputEl"
         v-model="command"
@@ -64,11 +64,11 @@ import { useSerial } from '@/composables/useSerial'
 
 const { isConnected, onRaw, send, sendRaw } = useSerial()
 
-const entries  = ref([])
-const command  = ref('')
+const entries   = ref([])
+const command   = ref('')
 const autoScroll = ref(true)
-const logEl    = ref(null)
-const inputEl  = ref(null)
+const logEl     = ref(null)
+const inputEl   = ref(null)
 
 const MAX_LINES = 500
 
