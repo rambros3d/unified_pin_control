@@ -1,12 +1,15 @@
 <template>
-  <div class="flex flex-col h-full">
+  <!-- Outer wrapper fills the tab panel and sets up the sticky layout -->
+  <div class="relative flex flex-col h-full overflow-hidden">
 
-    <!-- Log output -->
+    <!-- Scrollable log — leaves room for the sticky bar at bottom -->
     <div
       ref="logEl"
       class="flex-1 overflow-y-auto font-mono text-xs px-4 py-3 bg-surface-900 flex flex-col gap-0.5"
     >
-      <div v-if="!entries.length" class="text-tgray-400 italic">No messages yet. Connect a device and start receiving data.</div>
+      <div v-if="!entries.length" class="text-tgray-400 italic">
+        No messages yet. Connect a device and start receiving data.
+      </div>
       <div
         v-for="(e, i) in entries"
         :key="i"
@@ -24,8 +27,8 @@
       </div>
     </div>
 
-    <!-- Input bar -->
-    <div class="flex items-center gap-2 px-3 py-2 bg-surface-800 border-t border-surface-700">
+    <!-- Sticky input bar — always anchored to the bottom -->
+    <div class="sticky bottom-0 flex items-center gap-2 px-3 py-2 bg-surface-800 border-t border-surface-700 z-10">
       <input
         ref="inputEl"
         v-model="command"
@@ -51,6 +54,7 @@
         title="Clear"
       >✕ Clear</button>
     </div>
+
   </div>
 </template>
 
@@ -58,20 +62,19 @@
 import { ref, watch, nextTick, onUnmounted } from 'vue'
 import { useSerial } from '@/composables/useSerial'
 
-const { isConnected, onRaw, send } = useSerial()
+const { isConnected, onRaw, send, sendRaw } = useSerial()
 
-const entries = ref([])
-const command = ref('')
+const entries  = ref([])
+const command  = ref('')
 const autoScroll = ref(true)
-const logEl = ref(null)
-const inputEl = ref(null)
+const logEl    = ref(null)
+const inputEl  = ref(null)
 
 const MAX_LINES = 500
 
-// Listen to raw lines (both RX and TX) from the serial composable
 const removeRaw = onRaw((line, dir) => {
   const now = new Date()
-  const ts = now.toTimeString().slice(0, 8)
+  const ts  = now.toTimeString().slice(0, 8)
   entries.value.push({ ts, dir, text: line })
   if (entries.value.length > MAX_LINES) entries.value.shift()
 })
@@ -87,13 +90,11 @@ watch(entries, async () => {
 async function handleSend() {
   const cmd = command.value.trim()
   if (!cmd || !isConnected.value) return
-  // Try to send as JSON, fall back to raw string
   try {
     const parsed = JSON.parse(cmd)
     await send(parsed)
   } catch {
-    // Not JSON — send raw line by appending newline via a raw string wrapper
-    await send({ _raw: cmd })
+    await sendRaw(cmd)
   }
   command.value = ''
 }

@@ -5,8 +5,8 @@
     <!-- Connection Bar -->
     <ConnectionBar />
 
-    <!-- Tab Bar -->
-    <nav class="bg-surface-800 border-b border-surface-700 flex items-center px-4 gap-1">
+    <!-- Tab Bar — centered -->
+    <nav class="bg-surface-800 border-b border-surface-700 flex items-center justify-center px-4 gap-1">
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -24,7 +24,7 @@
     <!-- Main content -->
     <main class="flex-1 overflow-hidden flex flex-col">
 
-      <!-- Disconnected splash (shown over all tabs) -->
+      <!-- Disconnected splash -->
       <div
         v-if="!isConnected"
         class="flex flex-col items-center justify-center flex-1 gap-6"
@@ -42,7 +42,6 @@
 
         <!-- Pin Control Tab -->
         <div v-show="activeTab === 'pins'" class="flex-1 overflow-y-auto p-4">
-          <!-- Toolbar -->
           <div class="flex flex-wrap items-center gap-3 mb-4">
             <button @click="onUpdate" class="btn-secondary" :disabled="polling">⟳ Update</button>
             <label class="flex items-center gap-2 text-sm text-tgray-300 cursor-pointer">
@@ -71,7 +70,7 @@
         </div>
 
         <!-- Serial Terminal Tab -->
-        <div v-show="activeTab === 'terminal'" class="flex-1 overflow-hidden">
+        <div v-show="activeTab === 'terminal'" class="flex-1 overflow-hidden flex flex-col">
           <TerminalTab />
         </div>
 
@@ -118,7 +117,6 @@ const toast = useToast()
 const { isConnected, lastError, onMessage } = useSerial()
 const pinStore = usePinStore()
 
-// ─── Tabs
 const tabs = [
   { id: 'pins',     icon: '🔲', label: 'Pin Control' },
   { id: 'plotter',  icon: '📈', label: 'Serial Plotter' },
@@ -127,7 +125,6 @@ const tabs = [
 ]
 const activeTab = ref('pins')
 
-// ─── Polling
 const polling = ref(false)
 const pollInterval = ref(500)
 let pollTimer = null
@@ -141,7 +138,6 @@ watch([polling, pollInterval], () => {
 
 onUnmounted(() => clearInterval(pollTimer))
 
-// ─── Message dispatcher
 const removeHandler = onMessage(async (msg) => {
   if (msg.error) {
     toast.add({ severity: 'error', summary: 'Board Error', detail: msg.error, life: 4000 })
@@ -156,7 +152,6 @@ const removeHandler = onMessage(async (msg) => {
 
 onUnmounted(() => removeHandler())
 
-// ─── Toolbar actions
 async function onUpdate() { await pinStore.requestUpdate() }
 async function onSaveConfig() { await pinStore.saveConfig() }
 
