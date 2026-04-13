@@ -21,19 +21,14 @@
       </button>
     </nav>
 
-    <!-- Main content: takes all remaining height -->
+    <!-- Main content -->
     <main class="flex-1 min-h-0 flex flex-col overflow-hidden">
 
       <!-- Disconnected splash -->
-      <div
-        v-if="!isConnected"
-        class="flex flex-col items-center justify-center flex-1 gap-6"
-      >
+      <div v-if="!isConnected" class="flex flex-col items-center justify-center flex-1 gap-6">
         <div class="text-6xl">🔌</div>
         <h1 class="text-3xl font-bold text-twhite">Unified Pin Control</h1>
-        <p class="text-tgray-400 text-center max-w-sm">
-          Connect your board via USB to begin testing and validating GPIO pins.
-        </p>
+        <p class="text-tgray-400 text-center max-w-sm">Connect your board via USB to begin testing and validating GPIO pins.</p>
         <p v-if="lastError" class="text-red-400 text-sm">{{ lastError }}</p>
       </div>
 
@@ -42,6 +37,7 @@
 
         <!-- Pin Control -->
         <div v-show="activeTab === 'pins'" class="flex-1 min-h-0 overflow-y-auto p-4">
+          <!-- Toolbar -->
           <div class="flex flex-wrap items-center gap-3 mb-4">
             <button @click="onUpdate" class="btn-secondary" :disabled="polling">⟳ Update</button>
             <label class="flex items-center gap-2 text-sm text-tgray-300 cursor-pointer">
@@ -55,6 +51,14 @@
               <option :value="2000">2 s</option>
             </select>
             <div class="flex-1" />
+            <!-- Add Pin button -->
+            <button
+              @click="showAddPin = true"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold
+                     bg-blue-600 hover:bg-blue-500 text-white transition-colors border border-blue-500"
+            >
+              <span class="text-base leading-none">+</span> Add Pin
+            </button>
             <button @click="onSaveConfig" class="btn-secondary">💾 Save Config</button>
             <button @click="confirmReset = true" class="btn-danger">⚠ Reset All</button>
           </div>
@@ -66,7 +70,7 @@
           <PlotterTab />
         </div>
 
-        <!-- Serial Terminal: h-full so TerminalTab fills completely -->
+        <!-- Serial Terminal -->
         <div v-show="activeTab === 'terminal'" class="flex-1 min-h-0">
           <TerminalTab class="h-full" />
         </div>
@@ -78,6 +82,13 @@
 
       </template>
     </main>
+
+    <!-- Add Pin Modal -->
+    <AddPinModal
+      v-if="showAddPin"
+      @close="showAddPin = false"
+      @applied="onPinApplied"
+    />
 
     <!-- Reset modal -->
     <div v-if="confirmReset" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -104,6 +115,7 @@ import PinGrid from '@/components/PinGrid.vue'
 import PlotterTab from '@/components/PlotterTab.vue'
 import TerminalTab from '@/components/TerminalTab.vue'
 import FlasherTab from '@/components/FlasherTab.vue'
+import AddPinModal from '@/components/AddPinModal.vue'
 
 const toast = useToast()
 const { isConnected, lastError, onMessage } = useSerial()
@@ -115,9 +127,10 @@ const tabs = [
   { id: 'terminal', icon: '🖥️', label: 'Serial Terminal' },
   { id: 'flasher',  icon: '⚡', label: 'Firmware Flasher' },
 ]
-const activeTab = ref('pins')
+const activeTab   = ref('pins')
+const showAddPin  = ref(false)
 
-const polling = ref(false)
+const polling     = ref(false)
 const pollInterval = ref(500)
 let pollTimer = null
 watch([polling, pollInterval], () => {
@@ -138,6 +151,11 @@ onUnmounted(() => removeHandler())
 
 async function onUpdate() { await pinStore.requestUpdate() }
 async function onSaveConfig() { await pinStore.saveConfig() }
+
+function onPinApplied({ pin, mode }) {
+  toast.add({ severity: 'success', summary: `${pin} set to ${mode}`, life: 2000 })
+}
+
 const confirmReset = ref(false)
 async function doReset() {
   await pinStore.reset()
