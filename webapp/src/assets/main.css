@@ -4,6 +4,30 @@
 
 :root {
   font-family: 'Inter', system-ui, sans-serif;
+  
+  /* Light mode (default) */
+  --surface-900: #f9fafb;
+  --surface-800: #ffffff;
+  --surface-700: #f3f4f6;
+  --surface-600: #e5e7eb;
+  
+  --text-white: #111827;
+  --text-gray-200: #374151;
+  --text-gray-300: #4b5563;
+  --text-gray-400: #6b7280;
+}
+
+.dark {
+  /* Dark mode */
+  --surface-900: #0f1117;
+  --surface-800: #1a1d27;
+  --surface-700: #242736;
+  --surface-600: #2e3245;
+  
+  --text-white: #ffffff;
+  --text-gray-200: #e5e7eb;
+  --text-gray-300: #d1d5db;
+  --text-gray-400: #9ca3af;
 }
 
 body {
@@ -12,5 +36,5 @@ body {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #1a1d27; }
-::-webkit-scrollbar-thumb { background: #2e3245; border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--surface-800); }
+::-webkit-scrollbar-thumb { background: var(--surface-600); border-radius: 3px; }

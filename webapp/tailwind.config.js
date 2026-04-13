@@ -6,10 +6,16 @@ export default {
     extend: {
       colors: {
         surface: {
-          900: '#0f1117',
-          800: '#1a1d27',
-          700: '#242736',
-          600: '#2e3245'
+          900: 'var(--surface-900)',
+          800: 'var(--surface-800)',
+          700: 'var(--surface-700)',
+          600: 'var(--surface-600)'
+        },
+        twhite: 'var(--text-white)',
+        tgray: {
+          200: 'var(--text-gray-200)',
+          300: 'var(--text-gray-300)',
+          400: 'var(--text-gray-400)'
         }
       }
     }

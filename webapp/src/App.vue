@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface-900 text-white flex flex-col">
+  <div class="min-h-screen bg-surface-900 text-twhite flex flex-col">
     <Toast />
 
     <!-- Connection Bar -->
@@ -13,8 +13,8 @@
         class="flex flex-col items-center justify-center h-full min-h-[80vh] gap-6"
       >
         <div class="text-6xl">🔌</div>
-        <h1 class="text-3xl font-bold text-white">Unified Pin Control</h1>
-        <p class="text-gray-400 text-center max-w-sm">
+        <h1 class="text-3xl font-bold text-twhite">Unified Pin Control</h1>
+        <p class="text-tgray-400 text-center max-w-sm">
           Connect your board via USB to begin testing and validating GPIO pins.
         </p>
         <p v-if="lastError" class="text-red-400 text-sm">{{ lastError }}</p>
@@ -30,14 +30,14 @@
             :disabled="polling"
           >⟳ Update</button>
 
-          <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+          <label class="flex items-center gap-2 text-sm text-tgray-300 cursor-pointer">
             <input type="checkbox" v-model="polling" class="accent-blue-500" />
             Auto-poll
           </label>
 
           <select
             v-model="pollInterval"
-            class="bg-surface-700 text-sm text-gray-300 rounded px-2 py-1 border border-surface-600"
+            class="bg-surface-700 text-sm text-tgray-300 rounded px-2 py-1 border border-surface-600"
           >
             <option :value="250">250 ms</option>
             <option :value="500">500 ms</option>
@@ -66,7 +66,7 @@
     >
       <div class="bg-surface-800 rounded-xl p-6 w-80 shadow-2xl">
         <h2 class="text-lg font-bold mb-2">Reset all pins?</h2>
-        <p class="text-gray-400 text-sm mb-4">
+        <p class="text-tgray-400 text-sm mb-4">
           This will set all pins to their default safe state on the board.
         </p>
         <div class="flex gap-3 justify-end">
@@ -135,9 +135,9 @@ async function doReset() {
 
 <style>
 .btn-secondary {
-  @apply bg-surface-700 hover:bg-surface-600 text-white text-sm px-3 py-1.5 rounded-lg transition-colors border border-surface-600;
+  @apply bg-surface-700 hover:bg-surface-600 text-twhite text-sm px-3 py-1.5 rounded-lg transition-colors border border-surface-600;
 }
 .btn-danger {
-  @apply bg-red-700 hover:bg-red-600 text-white text-sm px-3 py-1.5 rounded-lg transition-colors;
+  @apply bg-red-700 hover:bg-red-600 text-twhite text-sm px-3 py-1.5 rounded-lg transition-colors;
 }
 </style>
