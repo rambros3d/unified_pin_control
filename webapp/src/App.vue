@@ -5,12 +5,29 @@
     <!-- Connection Bar -->
     <ConnectionBar />
 
+    <!-- Tab Bar -->
+    <nav class="bg-surface-800 border-b border-surface-700 flex items-center px-4 gap-1">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        @click="activeTab = tab.id"
+        class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+        :class="activeTab === tab.id
+          ? 'border-blue-500 text-twhite'
+          : 'border-transparent text-tgray-400 hover:text-twhite hover:border-surface-500'"
+      >
+        <span>{{ tab.icon }}</span>
+        <span>{{ tab.label }}</span>
+      </button>
+    </nav>
+
     <!-- Main content -->
-    <main class="flex-1 overflow-y-auto">
-      <!-- Disconnected splash -->
+    <main class="flex-1 overflow-hidden flex flex-col">
+
+      <!-- Disconnected splash (shown over all tabs) -->
       <div
         v-if="!isConnected"
-        class="flex flex-col items-center justify-center h-full min-h-[80vh] gap-6"
+        class="flex flex-col items-center justify-center flex-1 gap-6"
       >
         <div class="text-6xl">🔌</div>
         <h1 class="text-3xl font-bold text-twhite">Unified Pin Control</h1>
@@ -20,44 +37,51 @@
         <p v-if="lastError" class="text-red-400 text-sm">{{ lastError }}</p>
       </div>
 
-      <!-- Connected: pin grid -->
-      <div v-else class="p-4">
-        <!-- Toolbar -->
-        <div class="flex flex-wrap items-center gap-3 mb-4">
-          <button
-            @click="onUpdate"
-            class="btn-secondary"
-            :disabled="polling"
-          >⟳ Update</button>
+      <!-- Connected views -->
+      <template v-else>
 
-          <label class="flex items-center gap-2 text-sm text-tgray-300 cursor-pointer">
-            <input type="checkbox" v-model="polling" class="accent-blue-500" />
-            Auto-poll
-          </label>
-
-          <select
-            v-model="pollInterval"
-            class="bg-surface-700 text-sm text-tgray-300 rounded px-2 py-1 border border-surface-600"
-          >
-            <option :value="250">250 ms</option>
-            <option :value="500">500 ms</option>
-            <option :value="1000">1 s</option>
-            <option :value="2000">2 s</option>
-          </select>
-
-          <div class="flex-1" />
-
-          <button @click="onSaveConfig" class="btn-secondary">💾 Save Config</button>
-
-          <button @click="confirmReset = true" class="btn-danger">⚠ Reset All</button>
+        <!-- Pin Control Tab -->
+        <div v-show="activeTab === 'pins'" class="flex-1 overflow-y-auto p-4">
+          <!-- Toolbar -->
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <button @click="onUpdate" class="btn-secondary" :disabled="polling">⟳ Update</button>
+            <label class="flex items-center gap-2 text-sm text-tgray-300 cursor-pointer">
+              <input type="checkbox" v-model="polling" class="accent-blue-500" />
+              Auto-poll
+            </label>
+            <select
+              v-model="pollInterval"
+              class="bg-surface-700 text-sm text-tgray-300 rounded px-2 py-1 border border-surface-600"
+            >
+              <option :value="250">250 ms</option>
+              <option :value="500">500 ms</option>
+              <option :value="1000">1 s</option>
+              <option :value="2000">2 s</option>
+            </select>
+            <div class="flex-1" />
+            <button @click="onSaveConfig" class="btn-secondary">💾 Save Config</button>
+            <button @click="confirmReset = true" class="btn-danger">⚠ Reset All</button>
+          </div>
+          <PinGrid />
         </div>
 
-        <PinGrid />
-      </div>
-    </main>
+        <!-- Serial Plotter Tab -->
+        <div v-show="activeTab === 'plotter'" class="flex-1 overflow-hidden">
+          <PlotterTab />
+        </div>
 
-    <!-- Monitor Drawer -->
-    <MonitorDrawer />
+        <!-- Serial Terminal Tab -->
+        <div v-show="activeTab === 'terminal'" class="flex-1 overflow-hidden">
+          <TerminalTab />
+        </div>
+
+        <!-- Firmware Flasher Tab -->
+        <div v-show="activeTab === 'flasher'" class="flex-1 overflow-y-auto">
+          <FlasherTab />
+        </div>
+
+      </template>
+    </main>
 
     <!-- Reset confirmation modal -->
     <div
@@ -86,11 +110,22 @@ import { useSerial } from '@/composables/useSerial'
 import { usePinStore } from '@/stores/pinStore'
 import ConnectionBar from '@/components/ConnectionBar.vue'
 import PinGrid from '@/components/PinGrid.vue'
-import MonitorDrawer from '@/components/MonitorDrawer.vue'
+import PlotterTab from '@/components/PlotterTab.vue'
+import TerminalTab from '@/components/TerminalTab.vue'
+import FlasherTab from '@/components/FlasherTab.vue'
 
 const toast = useToast()
 const { isConnected, lastError, onMessage } = useSerial()
 const pinStore = usePinStore()
+
+// ─── Tabs
+const tabs = [
+  { id: 'pins',     icon: '🔲', label: 'Pin Control' },
+  { id: 'plotter',  icon: '📈', label: 'Serial Plotter' },
+  { id: 'terminal', icon: '🖥️', label: 'Serial Terminal' },
+  { id: 'flasher',  icon: '⚡', label: 'Firmware Flasher' },
+]
+const activeTab = ref('pins')
 
 // ─── Polling
 const polling = ref(false)
