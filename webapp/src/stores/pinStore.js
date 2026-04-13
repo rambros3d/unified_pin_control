@@ -5,7 +5,7 @@ import { useSerial } from '@/composables/useSerial'
 export const usePinStore = defineStore('pins', () => {
   const { send } = useSerial()
 
-  // ─── Board meta ───────────────────────────────────────────────
+  // ─── Board meta
   const boardName = ref('')
   const boardId = ref('')
 
@@ -13,12 +13,13 @@ export const usePinStore = defineStore('pins', () => {
   // Structure:
   // {
   //   name: string
-  //   inCaps: string[]     e.g. ['IN','IN_UP','ADC']
-  //   outCaps: string[]    e.g. ['OUT','PWM']
-  //   mode: string | null  currently active mode
+  //   cap: string            legacy cap field (DIO, AI, PWM, SERVO, DAC)
+  //   inCaps: string[]       e.g. ['DIN', 'AIN']
+  //   outCaps: string[]      e.g. ['DOUT', 'PWM', 'DAC']
+  //   mode: string | null    currently active mode
   //   value: number
-  //   res: number          PWM/ADC resolution bits
-  //   freq: number         PWM frequency Hz
+  //   res: number            PWM/ADC resolution bits
+  //   freq: number           PWM frequency Hz
   // }
   const pins = reactive(new Map())
 
@@ -29,7 +30,7 @@ export const usePinStore = defineStore('pins', () => {
     pinOrder.value.map(name => pins.get(name)).filter(Boolean)
   )
 
-  // ─── Load board definition from GET_DEF response ─────────────
+  // ─── Load board definition from GET_DEF response
   function loadDef(response) {
     boardName.value = response.board ?? ''
     boardId.value = response.id ?? ''
@@ -38,6 +39,7 @@ export const usePinStore = defineStore('pins', () => {
     for (const p of (response.pins ?? [])) {
       pins.set(p.pin, {
         name: p.pin,
+        cap: p.cap ?? '',
         inCaps: p.in ?? [],
         outCaps: p.out ?? [],
         mode: null,
@@ -49,7 +51,7 @@ export const usePinStore = defineStore('pins', () => {
     }
   }
 
-  // ─── Apply GET_CONFIG response ────────────────────────────────
+  // ─── Apply GET_CONFIG response
   function loadConfig(response) {
     for (const entry of (response.config ?? [])) {
       const pin = pins.get(entry.pin)
@@ -57,27 +59,28 @@ export const usePinStore = defineStore('pins', () => {
     }
   }
 
-  // ─── Apply UPDATE response ────────────────────────────────────
+  // ─── Apply UPDATE response
   function applyUpdate(response) {
     for (const p of (response.pins ?? [])) {
       const pin = pins.get(p.pin)
       if (!pin) continue
       pin.mode = p.mode
       pin.value = p.value ?? 0
-      if (p.res !== undefined) pin.res = p.res
+      if (p.res  !== undefined) pin.res  = p.res
       if (p.freq !== undefined) pin.freq = p.freq
     }
   }
 
-  // ─── Apply PIN_SET ack response ───────────────────────────────
+  // ─── Apply PIN_SET ack response
   function applyAck(response) {
     const pin = pins.get(response.pin)
     if (!pin) return
-    pin.mode = response.mode
+    pin.mode  = response.mode
     pin.value = response.value ?? 0
   }
 
-  // ─── Actions that send commands ───────────────────────────────
+  // ─── Send commands
+
   async function getDef() {
     await send({ cmd: 'GET_DEF' })
   }
@@ -86,16 +89,33 @@ export const usePinStore = defineStore('pins', () => {
     await send({ cmd: 'GET_CONFIG' })
   }
 
-  async function setPin({ pin, mode, value = 0, res = 8, freq = 1000, ack = 1 }) {
-    await send({ cmd: 'PIN_SET', pin, mode, value, res, freq, ack })
-    // Optimistically update local state
+  // Full pin set (mode + value + optional res/freq)
+  async function setPin({ pin, mode, value = 0, res, freq, ack = 1 }) {
     const p = pins.get(pin)
+    const payload = { cmd: 'PIN_SET', pin, mode, value, ack }
+    if (res  !== undefined) payload.res  = res
+    if (freq !== undefined) payload.freq = freq
+    await send(payload)
+    // Optimistic update
     if (p) {
-      p.mode = mode
+      p.mode  = mode
       p.value = value
-      p.res = res
-      p.freq = freq
+      if (res  !== undefined) p.res  = res
+      if (freq !== undefined) p.freq = freq
     }
+  }
+
+  // Convenience: just update the value of an already-configured pin
+  async function setValue(pinName, value) {
+    const p = pins.get(pinName)
+    if (!p || !p.mode) return
+    await send({ cmd: 'PIN_SET', pin: pinName, mode: p.mode, value, ack: 0 })
+    p.value = value
+  }
+
+  // Convenience: just change the mode
+  async function setMode(pinName, mode) {
+    await setPin({ pin: pinName, mode, value: 0 })
   }
 
   async function requestUpdate() {
@@ -105,7 +125,7 @@ export const usePinStore = defineStore('pins', () => {
   async function reset() {
     await send({ cmd: 'RESET' })
     for (const p of pins.values()) {
-      p.mode = null
+      p.mode  = null
       p.value = 0
     }
   }
@@ -118,6 +138,8 @@ export const usePinStore = defineStore('pins', () => {
     boardName, boardId,
     pins, pinOrder, pinList,
     loadDef, loadConfig, applyUpdate, applyAck,
-    getDef, getConfig, setPin, requestUpdate, reset, saveConfig
+    getDef, getConfig,
+    setPin, setValue, setMode,
+    requestUpdate, reset, saveConfig
   }
 })
