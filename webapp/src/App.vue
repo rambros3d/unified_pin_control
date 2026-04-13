@@ -5,7 +5,7 @@
     <!-- Connection Bar -->
     <ConnectionBar />
 
-    <!-- Tab Bar — centered -->
+    <!-- Tab Bar -->
     <nav class="bg-surface-800 border-b border-surface-700 flex items-center justify-center px-4 gap-1">
       <button
         v-for="tab in tabs"
@@ -43,20 +43,7 @@
         <!-- Pin Control Tab -->
         <div v-show="activeTab === 'pins'" class="flex-1 overflow-y-auto p-4">
           <div class="flex flex-wrap items-center gap-3 mb-4">
-            <button @click="onUpdate" class="btn-secondary" :disabled="polling">⟳ Update</button>
-            <label class="flex items-center gap-2 text-sm text-tgray-300 cursor-pointer">
-              <input type="checkbox" v-model="polling" class="accent-blue-500" />
-              Auto-poll
-            </label>
-            <select
-              v-model="pollInterval"
-              class="bg-surface-700 text-sm text-tgray-300 rounded px-2 py-1 border border-surface-600"
-            >
-              <option :value="250">250 ms</option>
-              <option :value="500">500 ms</option>
-              <option :value="1000">1 s</option>
-              <option :value="2000">2 s</option>
-            </select>
+            <button @click="onGetStatus" class="btn-secondary">⟳ Refresh</button>
             <div class="flex-1" />
             <button @click="onSaveConfig" class="btn-secondary">💾 Save Config</button>
             <button @click="confirmReset = true" class="btn-danger">⚠ Reset All</button>
@@ -102,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
 import { useSerial } from '@/composables/useSerial'
@@ -113,53 +100,56 @@ import PlotterTab from '@/components/PlotterTab.vue'
 import TerminalTab from '@/components/TerminalTab.vue'
 import FlasherTab from '@/components/FlasherTab.vue'
 
-const toast = useToast()
+const toast    = useToast()
 const { isConnected, lastError, onMessage } = useSerial()
 const pinStore = usePinStore()
 
 const tabs = [
   { id: 'pins',     icon: '🔲', label: 'Pin Control' },
   { id: 'plotter',  icon: '📈', label: 'Serial Plotter' },
-  { id: 'terminal', icon: '🖥️', label: 'Serial Terminal' },
-  { id: 'flasher',  icon: '⚡', label: 'Firmware Flasher' },
+  { id: 'terminal', icon: '🖥️',  label: 'Serial Terminal' },
+  { id: 'flasher',  icon: '⚡',  label: 'Firmware Flasher' },
 ]
-const activeTab = ref('pins')
+const activeTab   = ref('pins')
+const confirmReset = ref(false)
 
-const polling = ref(false)
-const pollInterval = ref(500)
-let pollTimer = null
-
-watch([polling, pollInterval], () => {
-  clearInterval(pollTimer)
-  if (polling.value) {
-    pollTimer = setInterval(() => pinStore.requestUpdate(), pollInterval.value)
+// ─── Protocol message dispatcher ─────────────────────────────────
+const removeHandler = onMessage(async ({ type, payload }) => {
+  switch (type) {
+    case 'BINFO':
+      pinStore.loadDef(payload)
+      await pinStore.getConfig()
+      await pinStore.getStatus()
+      break
+    case 'CONFIG':
+      pinStore.loadConfig(payload)
+      break
+    case 'STAT':
+      pinStore.applyUpdates(payload)
+      break
+    case 'ACK':
+      pinStore.applyAck(payload)
+      break
+    case 'RESET':
+      toast.add({ severity: 'info',    summary: 'Pins reset',   life: 2000 })
+      break
+    case 'SAVE':
+      toast.add({ severity: 'success', summary: 'Config saved', life: 2000 })
+      break
+    case 'ERR':
+      toast.add({ severity: 'error',   summary: 'Board Error',  detail: payload.message, life: 4000 })
+      break
   }
-})
-
-onUnmounted(() => clearInterval(pollTimer))
-
-const removeHandler = onMessage(async (msg) => {
-  if (msg.error) {
-    toast.add({ severity: 'error', summary: 'Board Error', detail: msg.error, life: 4000 })
-    return
-  }
-  if (msg.board) { pinStore.loadDef(msg); await pinStore.getConfig() }
-  else if (msg.config) pinStore.loadConfig(msg)
-  else if (msg.pins)  pinStore.applyUpdate(msg)
-  else if (msg.pin)   pinStore.applyAck(msg)
-  else if (msg.resp)  toast.add({ severity: 'success', summary: msg.resp, life: 2000 })
 })
 
 onUnmounted(() => removeHandler())
 
-async function onUpdate() { await pinStore.requestUpdate() }
+async function onGetStatus()  { await pinStore.getStatus() }
 async function onSaveConfig() { await pinStore.saveConfig() }
 
-const confirmReset = ref(false)
 async function doReset() {
   await pinStore.reset()
   confirmReset.value = false
-  toast.add({ severity: 'info', summary: 'Pins reset', life: 2000 })
 }
 </script>
 
