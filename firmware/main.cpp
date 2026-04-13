@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <ArduinoJson.h>
 #include "pin_manager.h"
 #include "serial_handler.h"
 
