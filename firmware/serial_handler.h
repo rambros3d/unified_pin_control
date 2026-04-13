@@ -1,6 +1,7 @@
 #pragma once
 
-namespace SerialHandler {
-  void init();
-  void update();
-}
+class SerialHandler {
+public:
+  static void init();
+  static void update();
+};
