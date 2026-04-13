@@ -8,17 +8,29 @@ let readLoopActive = false
 const isConnected = ref(false)
 const lastError = ref(null)
 const _messageHandlers = []
+const _rawHandlers = []
 
 export function useSerial() {
-  // ─── Register a handler called for every parsed JSON line received
+  // Register a handler called for every parsed JSON message
   function onMessage(handler) {
     if (!_messageHandlers.includes(handler)) {
       _messageHandlers.push(handler)
     }
-    // Return cleanup function
     return () => {
       const idx = _messageHandlers.indexOf(handler)
       if (idx !== -1) _messageHandlers.splice(idx, 1)
+    }
+  }
+
+  // Register a handler called for every raw line (RX and TX)
+  // handler(line: string, dir: 'rx' | 'tx')
+  function onRaw(handler) {
+    if (!_rawHandlers.includes(handler)) {
+      _rawHandlers.push(handler)
+    }
+    return () => {
+      const idx = _rawHandlers.indexOf(handler)
+      if (idx !== -1) _rawHandlers.splice(idx, 1)
     }
   }
 
@@ -55,11 +67,19 @@ export function useSerial() {
     isConnected.value = false
   }
 
+  // Send a JSON object as a newline-terminated JSON string
   async function send(cmdObject) {
     if (!writer) throw new Error('Not connected')
     const line = JSON.stringify(cmdObject) + '\n'
-    // Emit for MonitorDrawer to capture outgoing commands
-    window.dispatchEvent(new CustomEvent('upc:tx', { detail: line.trim() }))
+    _emitRaw(line.trim(), 'tx')
+    await writer.write(line)
+  }
+
+  // Send a raw string line (no JSON wrapping)
+  async function sendRaw(text) {
+    if (!writer) throw new Error('Not connected')
+    const line = text.endsWith('\n') ? text : text + '\n'
+    _emitRaw(line.trim(), 'tx')
     await writer.write(line)
   }
 
@@ -69,11 +89,18 @@ export function useSerial() {
     connect,
     disconnect,
     send,
-    onMessage
+    sendRaw,
+    onMessage,
+    onRaw
   }
 }
 
-// ─── Internal read loop ──────────────────────────────────────────
+// ─── Internal helpers ────────────────────────────────────────────
+
+function _emitRaw(line, dir) {
+  for (const h of _rawHandlers) h(line, dir)
+}
+
 let _lineBuffer = ''
 
 async function _startReadLoop(reader) {
@@ -86,11 +113,12 @@ async function _startReadLoop(reader) {
       _lineBuffer = lines.pop() // keep incomplete last fragment
       for (const line of lines) {
         if (!line.trim()) continue
+        _emitRaw(line.trim(), 'rx')
         try {
           const parsed = JSON.parse(line)
           for (const handler of _messageHandlers) handler(parsed, line)
         } catch {
-          // Non-JSON noise — ignore silently
+          // Non-JSON noise — passed to raw handlers only
         }
       }
     }
