@@ -1,6 +1,8 @@
 <template>
   <div class="h-screen bg-surface-900 text-twhite flex flex-col overflow-hidden">
-    <Toast />
+    <!-- Global notification stack -->
+    <ToastStack />
+
     <ConnectionBar />
 
     <!-- Tab Bar -->
@@ -52,20 +54,9 @@
           <PinGrid />
         </div>
 
-        <!-- Serial Plotter -->
-        <div v-show="activeTab === 'plotter'" class="flex-1 min-h-0 overflow-hidden">
-          <PlotterTab />
-        </div>
-
-        <!-- Serial Terminal -->
-        <div v-show="activeTab === 'terminal'" class="flex-1 min-h-0">
-          <TerminalTab class="h-full" />
-        </div>
-
-        <!-- Firmware Flasher -->
-        <div v-show="activeTab === 'flasher'" class="flex-1 min-h-0 overflow-y-auto">
-          <FlasherTab />
-        </div>
+        <div v-show="activeTab === 'plotter'"  class="flex-1 min-h-0 overflow-hidden"><PlotterTab /></div>
+        <div v-show="activeTab === 'terminal'" class="flex-1 min-h-0"><TerminalTab class="h-full" /></div>
+        <div v-show="activeTab === 'flasher'"  class="flex-1 min-h-0 overflow-y-auto"><FlasherTab /></div>
       </template>
     </main>
 
@@ -87,8 +78,7 @@
 
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
-import Toast from 'primevue/toast'
+import { useToast } from '@/composables/useToast'
 import { useSerial } from '@/composables/useSerial'
 import { usePinStore } from '@/stores/pinStore'
 import ConnectionBar from '@/components/ConnectionBar.vue'
@@ -97,6 +87,7 @@ import PlotterTab from '@/components/PlotterTab.vue'
 import TerminalTab from '@/components/TerminalTab.vue'
 import FlasherTab from '@/components/FlasherTab.vue'
 import AddPinModal from '@/components/AddPinModal.vue'
+import ToastStack from '@/components/ToastStack.vue'
 
 const toast = useToast()
 const { isConnected, lastError, onMessage } = useSerial()
@@ -108,9 +99,9 @@ const tabs = [
   { id: 'terminal', icon: '🖥️', label: 'Serial Terminal' },
   { id: 'flasher',  icon: '⚡', label: 'Firmware Flasher' },
 ]
-const activeTab  = ref('pins')
-const showAddPin = ref(false)
-const polling    = ref(false)
+const activeTab    = ref('pins')
+const showAddPin   = ref(false)
+const polling      = ref(false)
 const pollInterval = ref(500)
 let pollTimer = null
 
@@ -120,32 +111,18 @@ watch([polling, pollInterval], () => {
 })
 onUnmounted(() => clearInterval(pollTimer))
 
-// ─── Message dispatcher — matches the TEXT protocol from useSerial.js
-// msg = { type: 'BINFO'|'CONFIG'|'STAT'|'ACK'|'RESET'|'SAVE'|'ERR', payload, raw }
 const removeHandler = onMessage(async ({ type, payload }) => {
   switch (type) {
     case 'BINFO':
-      pinStore.loadDef(payload)      // payload: { id, name, pins: [{pin, caps}] }
+      pinStore.loadDef(payload)
       await pinStore.getConfig()
       break
-    case 'CONFIG':
-      pinStore.loadConfig(payload)   // payload: { config: [{pin, mode}] }
-      break
-    case 'STAT':
-      pinStore.applyUpdate(payload)  // payload: { updates: [{pin, value}] }
-      break
-    case 'ACK':
-      pinStore.applyAck(payload)     // payload: { pin, mode, value }
-      break
-    case 'RESET':
-      toast.add({ severity: 'info', summary: 'Board reset', life: 2000 })
-      break
-    case 'SAVE':
-      toast.add({ severity: 'success', summary: 'Config saved', life: 2000 })
-      break
-    case 'ERR':
-      toast.add({ severity: 'error', summary: 'Board Error', detail: payload.message, life: 4000 })
-      break
+    case 'CONFIG':  pinStore.loadConfig(payload);  break
+    case 'STAT':    pinStore.applyUpdate(payload);  break
+    case 'ACK':     pinStore.applyAck(payload);     break
+    case 'RESET':   toast.add({ severity: 'info',    summary: 'Board reset',   life: 2000 }); break
+    case 'SAVE':    toast.add({ severity: 'success', summary: 'Config saved',   life: 2000 }); break
+    case 'ERR':     toast.add({ severity: 'error',   summary: 'Board Error', detail: payload.message, life: 5000 }); break
   }
 })
 onUnmounted(() => removeHandler())
